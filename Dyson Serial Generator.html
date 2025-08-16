@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dyson Serial Generator</title>
+<style>
+  :root{--bg:#0f172a;--card:#111827ee;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--ring:#334155;--danger:#ef4444}
+  *{box-sizing:border-box}html,body{height:100%}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,Arial;background:#0b1222;color:var(--text)}
+  .wrap{max-width:1000px;margin:32px auto;padding:24px}
+  .card{background:var(--card);border:1px solid #1f2937;border-radius:18px;box-shadow:0 10px 30px #0008;padding:24px}
+  h1{margin:0 0 6px;font-size:28px}
+  p.sub{margin:0 0 16px;color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{appearance:none;border:none;padding:12px 14px;border-radius:12px;font-weight:600;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#16a34a);color:#052e1c}
+  .btn.secondary{background:#0b1222;border:1px solid var(--ring);color:#dbeafe}
+  .btn.ghost{background:transparent;border:1px dashed var(--ring);color:#94a3b8}
+  .kv{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed #1f2937}
+  .out{white-space:pre-wrap;min-height:24px;font-family:ui-monospace,Menlo,Consolas,monospace;background:#020617;border:1px solid #1f2937;border-radius:14px;padding:14px}
+  
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  height: 38px;
+  border: 1px solid #1f2937;
+  border-radius: 999px;
+  background: #030712;
+  color: #cbd5e1;
+  font-size: 13px;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+.badge.active {
+  background: #2563eb; /* blue background */
+  color: #fff;         /* white text */
+  box-shadow: 0 0 8px rgba(59,130,246,0.7);
+}
+
+
+  dialog{width:600px;max-width:95vw;border:none;border-radius:16px;padding:0;background:#0b1222;color:var(--text);box-shadow:0 24px 80px #000b}
+  dialog header{padding:16px 18px;border-bottom:1px solid #1f2937;background:linear-gradient(180deg,#111827,#0b1222)}
+  dialog header h2{margin:0;font-size:18px}
+  dialog .body{padding:16px 18px}
+  dialog .footer{padding:16px 18px;border-top:1px solid #1f2937;display:flex;justify-content:space-between;gap:10px}
+  label{display:block;margin:10px 0 6px}
+  input,select{width:450px;max-width:100%;padding:10px 12px;border-radius:10px;background:#020617;border:1px solid #1f2937;color:#e5e7eb;display:block;margin:0 auto}
+  small.help{display:block;color:#94a3b8;margin-top:2px}
+  input.sample-active{color:var(--muted)}
+
+  .form-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0}
+  .form-row label{flex:0 0 180px;text-align:right}
+  .form-row input,.form-row select{flex:1;margin:0}
+
+/* === Polished compact modal styles === */
+dialog{font-size:14px}
+dialog header h2{font-size:16px;font-weight:600;color:var(--accent)}
+.form-row{margin:6px 0}
+.form-row label{flex:0 0 150px;font-size:13px;font-weight:500;color:var(--muted);text-align:right}
+.form-row input,.form-row select{font-size:13px;padding:8px 10px;border-radius:8px}
+small.help{font-size:11px;color:#64748b;margin-left:160px;display:block}
+
+
+/* Override widths */
+.form-row input,.form-row select{width:500px;max-width:100%}
+
+.btn.small{padding:6px 10px;font-size:12px;border-radius:8px}
+
+/* Clean Quantity Box */
+#qty {
+  width: 120px;
+  padding: 8px 10px;
+  border: 1px solid var(--ring);
+  border-radius: 10px;
+  background: #0b1222;
+  color: var(--text);
+  font-size: 14px;
+  text-align: center;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+#qty:focus {
+  border: 1px solid var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
+}
+
+
+.kv {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* reduced spacing between label and input */
+}
+.kv b {
+  margin-right: 4px;
+  font-size: 14px;
+}
+.kv input {
+  margin-left: 0;
+}
+
+
+.output-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.output-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+}
+
+
+.byline {
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+
+/* Read-only look for mother fields */
+.form-row input[disabled]{
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #0a0f1d;
+  border-color: #1f2937;
+}
+
+
+/* --- Strong no-copy/no-select for Output --- */
+.out, .out * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+
+.btn.danger {
+  background: linear-gradient(135deg, var(--danger), #b91c1c);
+  color: #fff;
+}
+
+
+/* Red text for incomplete (less-than-6) child-only groups shown in UI only */
+.incomplete { 
+  color: #ef4444; 
+  font-weight: 700; 
+}
+
+
+
+.btn.generate-btn {
+  background: linear-gradient(135deg, #facc15, #eab308);
+  color: #1f2937;
+  font-weight: 700;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.btn.generate-btn:hover {
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+  transform: translateY(-2px);
+}
+
+
+
+.btn.download-btn {
+  background: linear-gradient(135deg, #3b82f6, #2563eb); /* blue gradient */
+  color: #fff;
+  font-weight: 600;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+.btn.download-btn:hover:enabled {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+  transform: translateY(-2px);
+}
+.btn.download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+
+
+
+
+
+
+
+
+#editChild, #editMother {
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+#editChild:hover, #editMother:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.7); /* green glow */
+}
+
+
+
+.kv input[type="text"] {
+  width: 180px;
+  padding: 8px 10px;
+  border: 1px solid var(--ring);
+  border-radius: 10px;
+  background: #0b1222;
+  color: var(--text);
+  font-size: 13px;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+}
+.kv input[type="text"]::placeholder {
+  color: #64748b;
+}
+
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.close-btn:hover {
+  color: var(--danger);
+}
+
+
+#engName, #qcName {
+  width: 140px;
+  padding: 6px 8px;
+  border: 1px solid var(--ring);
+  border-radius: 8px;
+  background: #0b1222;
+  color: var(--text);
+  font-size: 13px;
+  text-align: left;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
+  transition: border 0.2s, box-shadow 0.2s;
+}
+#engName:focus, #qcName:focus {
+  border: 1px solid var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
+}
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Dyson Serial Generator</h1>
+      <p class="sub">FOR PCB LASER MARKING<br><span class="byline">By: Centralized Process Engineering - HQM</span></p>
+
+      <div class="row" style="margin-bottom:8px">
+        <button class="btn primary" id="editChild">Child Serial</button>
+        <button class="btn primary" id="editMother">Mother Serial</button>
+        
+        <button class="btn generate-btn" id="generate">Generate</button>
+        <button class="btn download-btn" id="dlTxt" disabled>Laser File</button>
+        <button class="btn download-btn" id="dlCsv" disabled>Qualified</button>
+        <span class="badge" id="stats">—</span>
+      </div>
+
+      <div class="kv"><b>Quantity (Child)</b><input type="number" id="qty" min="1" max="999" value="48" style="max-width:120px"> <input type="text" id="engName" placeholder="Process Engineer Name" style="max-width:180px"> <input type="text" id="qcName" placeholder="QC Engineer Name" style="max-width:180px"> <button class="btn danger small" id="clearOutput">Clear</button></div>
+      <div class="kv output-box">
+  <b class="output-title">Output</b>
+  <div class="out" id="output">—</div>
+</div>
+    </div>
+  </div>
+
+  
+  <!-- Child Modal -->
+  <dialog id="childModal">
+    <header style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>CHILD SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
+      <button class="close-btn" id="childClose">&times;</button>
+    </header>
+    <div class="body" id="childBody"></div>
+    <div class="footer">
+      <button class="btn ghost" id="childCancel">Cancel</button>
+      <div class="row"><button class="btn secondary" id="childReset">Reset</button><button class="btn primary" id="childSave">Save</button></div>
+    </div>
+  </dialog>
+
+
+  
+  <!-- Mother Modal -->
+  <dialog id="motherModal">
+    <header style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>MOTHER SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
+      <button class="close-btn" id="motherClose">&times;</button>
+    </header>
+    <div class="body" id="motherBody"></div>
+    <div class="footer">
+      <button class="btn ghost" id="motherCancel">Cancel</button>
+      <div class="row"><button class="btn secondary" id="motherReset">Reset</button><button class="btn primary" id="motherSave">Save</button></div>
+    </div>
+  </dialog>
+
+
+<script>
+  // ====== State ======
+  const C = { // Child
+    AAAAAA:'846775', BB:'01', CC:'02', DD:'25', G:'E', HHHHHH:'000001', J:'B', KKKKKK:'X893--', LL:'19', MM:'01', NNNN:'2501', PP:'01', Q:'W'
+  };
+  const M = { // Mother
+    MODEL:'X893', NAME:'POWER', VAR:'03', REV:'01', DATE:'051925', RUN:'1'
+  };
+
+  const PART_MODEL_MAP = { '846765':'USERIN', '846775':'POWER' };
+
+  const MONTHS = {A:'January',B:'February',C:'March',D:'April',E:'May',F:'June',G:'July',H:'August',J:'September',K:'October',M:'November',N:'December'};
+  const MONTH_LETTERS = ['A','B','C','D','E','F','G','H','J','K','M','N'];
+  const letterToMM = (letter)=>{
+    const idx = MONTH_LETTERS.indexOf(String(letter).toUpperCase());
+    return idx>=0 ? String(idx+1).padStart(2,'0') : '01';
+  };
+  const mmToLetter = (mm)=>{
+    const n = Math.max(1, Math.min(12, parseInt(mm,10)||1));
+    return MONTH_LETTERS[n-1];
+  };
+
+  const SUPPLIERS = {A:'Wistron Corporation',B:'SKP BM Electronics Sdn Bhd',C:'Wistron New Web Corporation (WNC)',D:'Hi-P China',E:'Escatec',F:'Truly Optoelectronics Ltd',G:'New Vision Display Ltd',H:'Hi-P Philippines Technology Corporation',J:'Jabil Circuit (S) Pte Ltd',K:'Jabil Circuit Sdn Bhd (Jabil Penang)',M:'Microtronics Technologies Sdn Bhd',N:'Kinpo Electronics (Philippines) Inc (NKG)',P:'Flextronics Technology (Penang) Sdn Bhd',Q:'Quanta Computer Inc',R:'Yuyao Sunny Optical Intelligence Technology Co. Ltd',S:'SMT Technologies Sdn Bhd (SMTT)',T:'Flextronics Shah Alam Sdn Bhd (PTP)',V:'VS Electronics Sdn Bhd (VSE)',W:'VS Industry Berhad (VSI)',X:'Jabil Inc (Jabil Mexico)',Y:'Wingtech Mobile Communications Co. Ltd',Z:'Flextronics Manufacturing (Zhuhai) Co. Ltd'};
+  const BARE = {U:'Unitech',Y:'Yan Tat',W:'Olympics',K:'KCE','-':'OEM (not Dyson bare board)'};
+
+  // ====== UI Builders ======
+  function field(label, id, val, help=''){
+  return `
+    <div class="form-row">
+      <label for="${id}">${label}</label>
+      <input id="${id}" value="${val}" data-sample="${val}" class="sample-active">
+    </div>
+    ${help?`<small class='help'>${help}</small>`:''}
+  `;
+}
+  function select(label,id,opts,val,help=''){
+  const options = Object.entries(opts).map(([k,v])=>`<option value="${k}" ${k===val?'selected':''}>${k} — ${v}</option>`).join('');
+  return `
+    <div class="form-row">
+      <label for='${id}'>${label}</label>
+      <select id='${id}'>${options}</select>
+    </div>
+    ${help?`<small class='help'>${help}</small>`:''}
+  `;
+}
+
+  // Disabled input helper (for read-only fields)
+  function dfield(label, id, val, help=''){
+    return `
+      <div class="form-row">
+        <label for="${id}">${label}</label>
+        <input id="${id}" value="${val}" data-sample="${val}" class="sample-active" disabled>
+      </div>
+      ${help?`<small class='help'>${help}</small>`:''}
+    `;
+  }
+
+  function childForm(){
+    return [
+      select('Part Number (6 digits, left‑pad 0)','c_AAAAAA',{ '846765':'USER INTERFACE','846775':'POWER' },C.AAAAAA,'Choose part number'),
+      field('Variance (2)','c_BB',C.BB),
+      field('Revision (2)','c_CC',C.CC),
+      field('Year (YY)','c_DD',C.DD),
+      select('Manufacturing Month','c_G',MONTHS,C.G,'A=Jan, B=Feb, C=Mar, D=Apr, E=May, F=Jun, G=Jul, H=Aug, J=Sep, K=Oct, M=Nov, N=Dec'),
+      field('Child start run (enter 1; outputs 6-digit)','c_H',C.HHHHHH),
+      select('PCBA Supplier','c_J',SUPPLIERS,C.J,'Saving letter code; label shows supplier name'),
+      field('Model (right‑pad "-" to 6)','c_K',C.KKKKKK),
+      field('Day (2)','c_LL',C.LL),
+      field('Config (2)','c_MM',C.MM),
+      field('BareBoard Date (4)','c_N',C.NNNN),
+      select('Bare board manufacturer','c_Q',BARE,C.Q,'Choose “-” for bought‑out OEM PCBAs')
+    ].join('');
+  }
+  function motherForm(){
+    return [
+      dfield('Model Number','m_MODEL',M.MODEL),
+      dfield('Model Name','m_NAME',M.NAME),
+      dfield('Variance (2)','m_VAR',M.VAR),
+      dfield('Revision (2)','m_REV',M.REV),
+      dfield('Date (MMDDYY)','m_DATE',M.DATE,'Use Auto‑fill to set today (MMDDYY)'),
+      field('Start Run','m_RUN',M.RUN,'Mother run increments per 6‑child group; two identical mother lines per group')
+    ].join('');
+  }
+
+  
+  function retagSamples(containerId){
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    el.querySelectorAll('input[data-sample]').forEach(inp=>{
+      const sample = inp.getAttribute('data-sample') || '';
+      if (inp.value === sample || inp.value.trim()===''){
+        inp.value = sample;
+        inp.classList.add('sample-active');
+      }
+    });
+  }
+
+
+  
+  // ====== Child-to-Mother live date sync ======
+  function syncMotherDateFromChild() {
+    try {
+      const ddEl = document.getElementById('c_DD');
+      const gEl  = document.getElementById('c_G');
+      const llEl = document.getElementById('c_LL');
+      if (!ddEl || !gEl || !llEl) return; // not rendered yet
+      const yy = String(ddEl.value || '').padStart(2,'0');
+      const mm = letterToMM(gEl.value || 'A');
+      const dd = String(llEl.value || '').padStart(2,'0');
+      M.DATE = `${mm}${dd}${yy}`;
+      renderMother();
+    } catch(e) { console.warn("Live sync Child→Mother failed", e); }
+  }
+
+  // Listen to changes on Child date fields
+  document.addEventListener('input', (e)=>{
+    if (e && e.target && ['c_DD','c_G','c_LL'].includes(e.target.id)) {
+      syncMotherDateFromChild();
+    }
+  });
+
+
+  // ====== Serial Builders ======
+  const pad = (s,l,ch='0')=>String(s).toUpperCase().padStart(l,ch);
+  function buildChild(i){
+    const run = pad(parseInt(C.HHHHHH,10)+i,6,'0');
+    return `${pad(C.AAAAAA,6,'0')}${pad(C.BB,2,'0')}${pad(C.CC,2,'0')}${pad(C.DD,2,'0')}${C.G}${run}${C.J}${pad(C.KKKKKK,6,'-')}${pad(C.LL,2,'0')}${pad(C.MM,2,'0')}${pad(C.NNNN,4,'0')}${pad(C.PP||'01',2,'0')}${C.Q}`;
+  }
+  function buildMother(groupIndex){
+    const run = pad(parseInt(M.RUN,10)+groupIndex,6,'0');
+    return `${M.MODEL.replace(/-/g,'')}${M.NAME}${pad(M.VAR,2,'0')}${pad(M.REV,2,'0')}${M.DATE}${run}`;
+  }
+
+  // ====== Generate & Download ======
+  function generate(){
+    const raw = parseInt(document.getElementById('qty').value) || 0;
+    const qty = Math.max(0, Math.min(999, raw)); // allow 0
+    const totalGroups = Math.ceil(qty / 6);
+
+    const lines = [];        // only complete groups -> used for download
+    const displayLines = []; // what we show in the Output box
+    let made = 0;
+    let completeGroups = 0;
+
+    for (let g = 0; g < totalGroups; g++) {
+      const remaining = qty - made;
+      const inGroup = Math.min(6, remaining);
+      const children = [];
+
+      for (let i = 0; i < inGroup; i++) {
+        const child = buildChild(made++);
+        children.push(child);
+      }
+
+      if (inGroup === 6) {
+        // Complete group -> include in both display and download
+        displayLines.push(...children);
+        const m = buildMother(g);
+        displayLines.push(m, m);
+        lines.push(...children, m, m);
+        completeGroups++;
+      } else if (inGroup > 0) {
+        // Incomplete group -> display children in red, skip mother entirely
+        children.forEach(c => displayLines.push(`<span class="incomplete">${c}</span>`));
+      }
+    }
+
+    // Render to output (use innerHTML to honor <span class="incomplete">)
+    const outEl = document.getElementById('output');
+    outEl.innerHTML = displayLines.length ? displayLines.join('\n') : '—';
+
+    // Update downloads & stats
+    const hasDownload = lines.length > 0;
+    document.getElementById('dlTxt').disabled = !hasDownload;
+    document.getElementById('dlCsv').disabled = !hasDownload;
+    document.getElementById('stats').textContent = hasDownload ? `${lines.length} lines • ${completeGroups} group(s)` : '—';
+
+    // Toggle badge active state based on download availability
+    const badge = document.getElementById('stats');
+    if (badge) {
+      if (hasDownload) {
+        badge.classList.add('active');
+      } else {
+        badge.classList.remove('active');
+      }
+    }
+
+
+    // Expose for download functions
+    window.__lines = lines;
+    window.__groups = completeGroups;
+    window.__qty = completeGroups * 6; // only complete groups count for downloads
+  }
+
+
+
+  function downloadTxt(){
+    const lines = window.__lines||[]; if(!lines.length) return;
+    const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; const modelName = (M.NAME || 'DysonModel').replace(/[^A-Za-z0-9_-]/g,'');
+    
+    const t1 = new Date();
+    const dstr1 = String(t1.getFullYear()) + String(t1.getMonth()+1).padStart(2,'0') + String(t1.getDate()).padStart(2,'0');
+    a.download = 'Laser_' + modelName + '_' + dstr1 + '.txt'; a.click(); URL.revokeObjectURL(url);
+  }
+  function downloadCsv(){
+    const lines = window.__lines||[]; if(!lines.length) return;
+const engName = (document.getElementById('engName')?.value || '').replaceAll('"','""');
+const qcName  = (document.getElementById('qcName')?.value || '').replaceAll('"','""');
+    const rows = [`Serial generated by,"${engName}"`,`Validated/Qualified by,"${qcName}"`,'Type,Serial'];
+    let idx=0, made=0; const groups = window.__groups||Math.ceil((window.__qty||0)/6);
+    for(let g=0; g<groups; g++){
+      const inGroup = Math.min(6, (window.__qty||0)-made);
+      for(let i=0;i<inGroup;i++){ rows.push(`"Child","${lines[idx++]}"`); made++; }
+      rows.push(`"Mother","${lines[idx++]}"`);
+      rows.push(`"Mother","${lines[idx++]}"`);
+    }
+    const blob = new Blob([rows.join('\r\n')], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; const modelName = (M.NAME || 'DysonModel').replace(/[^A-Za-z0-9_-]/g,'');
+    
+    const t2 = new Date();
+    const dstr2 = String(t2.getFullYear()) + String(t2.getMonth()+1).padStart(2,'0') + String(t2.getDate()).padStart(2,'0');
+    a.download = 'Qualified_' + modelName + '_' + dstr2 + '.csv'; a.click(); URL.revokeObjectURL(url);
+  }
+
+  
+  // ====== Sample text behavior (clear on click, restore on blur) ======
+  document.addEventListener('focusin', (e)=>{
+    if (e.target instanceof HTMLInputElement && e.target.hasAttribute('data-sample')){
+      const sample = e.target.getAttribute('data-sample') || '';
+      if (e.target.value === sample){
+        e.target.value = '';
+        e.target.classList.remove('sample-active');
+      }
+    }
+  });
+  document.addEventListener('focusout', (e)=>{
+    if (e.target instanceof HTMLInputElement && e.target.hasAttribute('data-sample')){
+      const sample = e.target.getAttribute('data-sample') || '';
+      if (e.target.value.trim() === ''){
+        e.target.value = sample;
+        e.target.classList.add('sample-active');
+      }
+    }
+  });
+
+
+  
+  // ====== Live sync between Child PN and Mother NAME ======
+  document.addEventListener('change', (e)=>{
+    if (e.target && e.target.id === 'c_AAAAAA') {
+      const pn = e.target.value;
+      if (PART_MODEL_MAP[pn]){
+        M.NAME = PART_MODEL_MAP[pn];
+        renderMother();
+      }
+    }
+  });
+  document.addEventListener('input', (e)=>{
+    if (e.target && e.target.id === 'm_NAME') {
+      const nameNorm = (e.target.value||'').toUpperCase().trim();
+      for (const [pn, nm] of Object.entries(PART_MODEL_MAP)) {
+        if (nameNorm === String(nm).toUpperCase()) {
+          C.AAAAAA = pn;
+          renderChild();
+          break;
+        }
+      }
+    }
+  });
+
+
+  
+  // ====== Live sync VAR/REV between Child and Mother ======
+  document.addEventListener('input', (e)=>{
+    // Child -> Mother
+    if (e.target && (e.target.id === 'c_BB' || e.target.id === 'c_CC')){
+      try {
+        if (e.target.id === 'c_BB') M.VAR = (e.target.value || '').toString().padStart(2,'0');
+        if (e.target.id === 'c_CC') M.REV = (e.target.value || '').toString().padStart(2,'0');
+        renderMother();
+      } catch(err){ console.warn('Live sync to Mother VAR/REV failed', err); }
+    }
+    // Mother -> Child
+    if (e.target && (e.target.id === 'm_VAR' || e.target.id === 'm_REV')){
+      try {
+        if (e.target.id === 'm_VAR') C.BB = (e.target.value || '').toString().padStart(2,'0');
+        if (e.target.id === 'm_REV') C.CC = (e.target.value || '').toString().padStart(2,'0');
+        renderChild();
+      } catch(err){ console.warn('Live sync to Child BB/CC failed', err); }
+    }
+  });
+
+
+  // ====== Modal Wiring ======
+  const childModal=document.getElementById('childModal');
+  const motherModal=document.getElementById('motherModal');
+  function renderChild(){ document.getElementById('childBody').innerHTML = childForm(); retagSamples('childBody'); }
+  function renderMother(){ document.getElementById('motherBody').innerHTML = motherForm(); retagSamples('motherBody'); }
+  renderChild(); renderMother();
+
+  // Open
+  document.getElementById('editChild').addEventListener('click', ()=> childModal.showModal());
+  document.getElementById('editMother').addEventListener('click', ()=> motherModal.showModal());
+
+  // Save handlers
+  document.getElementById('childSave').addEventListener('click', ()=>{
+    C.AAAAAA=document.getElementById('c_AAAAAA').value; C.BB=document.getElementById('c_BB').value; C.CC=document.getElementById('c_CC').value;
+    C.DD=document.getElementById('c_DD').value; C.G=document.getElementById('c_G').value; C.HHHHHH = String(parseInt(document.getElementById('c_H').value||'0',10)||0);
+    C.J=document.getElementById('c_J').value; C.KKKKKK=document.getElementById('c_K').value; C.LL=document.getElementById('c_LL').value;
+    C.MM=document.getElementById('c_MM').value; C.NNNN=document.getElementById('c_N').value; C.Q=document.getElementById('c_Q').value;
+    
+    
+    // --- Sync Mother NAME from Child Part Number (mapping)
+    try {
+      if (PART_MODEL_MAP[C.AAAAAA]) {
+        M.NAME = PART_MODEL_MAP[C.AAAAAA];
+        renderMother();
+      }
+    } catch(e){ console.warn('Sync Mother NAME from Child PN failed', e); }
+    // --- Sync Mother DATE (MMDDYY) from Child date (YY + month letter + DD)
+    try {
+      const mm = letterToMM(C.G);
+      const dd = String(C.LL||'').padStart(2,'0');
+      const yy = String(C.DD||'').padStart(2,'0');
+      M.DATE = `${mm}${dd}${yy}`;
+      renderMother();
+    } catch(e){ console.warn('Sync Mother from Child failed', e); }
+
+    // --- Sync Mother VAR/REV from Child BB/CC
+    try {
+      M.VAR = (C.BB || M.VAR || '').toString().padStart(2,'0');
+      M.REV = (C.CC || M.REV || '').toString().padStart(2,'0');
+      renderMother();
+    } catch(e){ console.warn('Sync Mother VAR/REV from Child BB/CC failed', e); }
+    childModal.close(); generate();
+  });
+  document.getElementById('motherSave').addEventListener('click', ()=>{
+    M.MODEL=document.getElementById('m_MODEL').value; M.NAME=document.getElementById('m_NAME').value; M.VAR=document.getElementById('m_VAR').value;
+    M.REV=document.getElementById('m_REV').value; M.DATE=document.getElementById('m_DATE').value; M.RUN=document.getElementById('m_RUN').value;
+    
+    
+    // --- Sync Child Part Number from Mother NAME (reverse mapping)
+    try {
+      const nameNorm = (M.NAME||'').toUpperCase().trim();
+      for (const [pn, nm] of Object.entries(PART_MODEL_MAP)) {
+        if (nameNorm === String(nm).toUpperCase()) {
+          C.AAAAAA = pn;
+          renderChild();
+          break;
+        }
+      }
+    } catch(e){ console.warn('Sync Child PN from Mother NAME failed', e); }
+    // --- Sync Child date (YY + month letter + DD) from Mother DATE (MMDDYY)
+    try {
+      const dateStr = String(M.DATE||'');
+      const mm = dateStr.slice(0,2) || '01';
+      const dd = dateStr.slice(2,4) || '01';
+      const yy = dateStr.slice(4,6) || '00';
+      C.DD = yy;
+      C.G  = mmToLetter(mm);
+      C.LL = dd;
+      renderChild();
+    } catch(e){ console.warn('Sync Child from Mother failed', e); }
+motherModal.close(); generate();
+  });
+
+  // Cancel & Reset
+  document.getElementById('childCancel').addEventListener('click', ()=> childModal.close());
+  document.getElementById('motherCancel').addEventListener('click', ()=> motherModal.close());
+  document.getElementById('childReset').addEventListener('click', renderChild);
+  document.getElementById('motherReset').addEventListener('click', renderMother);
+
+  
+
+// Close buttons
+document.getElementById('childClose').addEventListener('click', ()=> childModal.close());
+document.getElementById('motherClose').addEventListener('click', ()=> motherModal.close());
+
+  // Other controls
+  document.getElementById('generate').addEventListener('click', generate);
+  document.getElementById('dlTxt').addEventListener('click', downloadTxt);
+  document.getElementById('dlCsv').addEventListener('click', downloadCsv);
+  // Initial render
+  generate();
+
+  // --- Hard block copy/select on Output ---
+  (function(){
+    const out = document.getElementById('output');
+    if (out) {
+      ['copy','cut','contextmenu','selectstart','dragstart'].forEach(ev => {
+        out.addEventListener(ev, e => { e.preventDefault(); return false; });
+      });
+    }
+  })();
+
+
+  
+  // --- Clear Output Button ---
+  document.getElementById('clearOutput').addEventListener('click', ()=>{
+    document.getElementById('qty').value = '';  // reset qty input
+    document.getElementById('output').textContent = '—';
+    document.getElementById('dlTxt').disabled = true;
+    document.getElementById('dlCsv').disabled = true;
+    document.getElementById('stats').textContent = '—';
+  });
+
+</script>
+
+
+
+
+<div style="position:fixed; bottom:10px; left:10px;
+            font-size:12px; color:#555; user-select:none; text-align:left;">
+  &copy; JAY 2025
+</div>
+
+</body>
+</html>
