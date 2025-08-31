@@ -1,8 +1,9 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Dyson Serial Generator</title>
 <style>
   :root{--bg:#0f172a;--card:#111827ee;--muted:#94a3b8;--text:#e5e7eb;--accent:#22c55e;--ring:#334155;--danger:#ef4444}
@@ -253,62 +254,203 @@ small.help{font-size:11px;color:#64748b;margin-left:160px;display:block}
   box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
 }
 
+
+:root.light {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --muted: #475569;
+  --text: #0f172a;
+  --accent: #22c55e;
+  --ring: #cbd5e1;
+  --danger: #ef4444;
+}
+
+body.light {
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+/* ===== Light Mode Component Overrides ===== */
+body.light .card{
+  background: var(--card);
+  border-color: #e2e8f0;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+}
+body.light .sub{ color: var(--muted); }
+body.light .byline{ color:#64748b; }
+
+/* Buttons */
+body.light .btn.secondary{
+  background:#ffffff;
+  border:1px solid var(--ring);
+  color:#0f172a;
+}
+body.light .btn.ghost{
+  background:transparent;
+  border:1px dashed var(--ring);
+  color:#64748b;
+}
+/* Keep gradient primaries, just adjust text color if needed */
+body.light .btn.primary{ color:#052e1c; }
+body.light .btn.generate-btn{ color:#1f2937; }
+body.light .btn.download-btn{ color:#ffffff; }
+
+/* Key/Value rows & dividers */
+body.light .kv{ border-bottom:1px dashed #e5e7eb; }
+body.light b{ color:#0f172a; }
+
+/* Output box */
+body.light .out{
+  background:#ffffff;
+  border-color:#e2e8f0;
+  color:#0f172a;
+}
+
+/* Badge */
+body.light .badge{
+  background:#ffffff;
+  color:#334155;
+  border-color:#e2e8f0;
+  box-shadow:none;
+}
+body.light .badge.active{
+  background:#2563eb;
+  color:#fff;
+  box-shadow:0 0 8px rgba(59,130,246,0.5);
+}
+
+/* Dialog (modal) */
+body.light dialog{
+  background:#ffffff;
+  color:#0f172a;
+  box-shadow:0 24px 80px rgba(2,6,23,0.15);
+}
+body.light dialog header{
+  background:linear-gradient(180deg,#f8fafc,#ffffff);
+  border-bottom:1px solid #e2e8f0;
+}
+body.light dialog .footer{
+  border-top:1px solid #e2e8f0;
+}
+
+/* Form controls */
+body.light input, 
+body.light select{
+  background:#ffffff;
+  color:#0f172a;
+  border:1px solid #e2e8f0;
+  box-shadow: inset 0 1px 1px rgba(2,6,23,0.04);
+}
+body.light input::placeholder{ color:#94a3b8; }
+
+/* Specific fields */
+body.light #qty,
+body.light #engName,
+body.light #qcName,
+body.light .kv input[type="text"]{
+  background:#ffffff;
+  color:#0f172a;
+  border:1px solid #e2e8f0;
+  box-shadow: inset 0 1px 1px rgba(2,6,23,0.04);
+}
+
+/* Disabled read-only */
+body.light .form-row input[disabled]{
+  background:#f8fafc;
+  border-color:#e2e8f0;
+  color:#64748b;
+}
+
+/* Close button hover color remains danger */
+body.light .close-btn{ color:#64748b; }
+body.light .close-btn:hover{ color: var(--danger); }
+
+/* Incomplete group color stays red; ensure contrast on light */
+body.light .incomplete{ color:#b91c1c; }
+
+/* ===== Minimalist Theme Toggle Button ===== */
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.theme-toggle:hover {
+  transform: scale(1.2);
+  color: var(--accent);
+}
+
+/* ===== Required name fields highlight ===== */
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 2px rgba(239,68,68,0.25) !important;
+}
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 6px;
+}
+  background: transparent;
+  border-style: dashed;
+}
+/* Generic disabled state for buttons */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Dyson Serial Generator</h1>
-      <p class="sub">FOR PCB LASER MARKING<br><span class="byline">By: Centralized Process Engineering - HQM Ionics EMS Inc.</span></p>
-
-      <div class="row" style="margin-bottom:8px">
-        <button class="btn primary" id="editChild">Child Serial</button>
-        <button class="btn primary" id="editMother">Mother Serial</button>
-        
-        <button class="btn generate-btn" id="generate">Generate</button>
-        <button class="btn download-btn" id="dlTxt" disabled>Laser File</button>
-        <button class="btn download-btn" id="dlCsv" disabled>Qualified</button>
-        <span class="badge" id="stats">—</span>
-      </div>
-
-      <div class="kv"><b>Quantity (Child)</b><input type="number" id="qty" min="1" max="999" value="0" style="max-width:120px"> <input type="text" id="engName" placeholder="Process Engineer Name" style="max-width:180px"> <input type="text" id="qcName" placeholder="QC Engineer Name" style="max-width:180px"> <button class="btn danger small" id="clearOutput">Clear</button></div>
-      <div class="kv output-box">
-  <b class="output-title">Output</b>
-  <div class="out" id="output">—</div>
+<body><button aria-label="Toggle theme" class="theme-toggle" id="themeToggle">🌙</button>
+<div class="wrap">
+<div class="card">
+<h1>Dyson Serial Generator</h1>
+<p class="sub">FOR PCB LASER MARKING<br/><span class="byline">By: Centralized Process Engineering - HQM Ionics EMS Inc.</span></p>
+<div class="row" style="margin-bottom:8px">
+<button class="btn primary" id="editChild">Child Serial</button>
+<button class="btn primary" id="editMother">Mother Serial</button>
+<button class="btn generate-btn" disabled="True" id="generate">Generate</button>
+<button class="btn download-btn" disabled="" id="dlTxt">Laser File</button>
+<button class="btn download-btn" disabled="" id="dlCsv">Qualified</button>
+<span class="badge" id="stats">—</span>
 </div>
-    </div>
-  </div>
-
-  
-  <!-- Child Modal -->
-  <dialog id="childModal">
-    <header style="display:flex;justify-content:space-between;align-items:center;">
-      <h2>CHILD SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
-      <button class="close-btn" id="childClose">&times;</button>
-    </header>
-    <div class="body" id="childBody"></div>
-    <div class="footer">
-      <button class="btn ghost" id="childCancel">Cancel</button>
-      <div class="row"><button class="btn secondary" id="childReset">Reset</button><button class="btn primary" id="childSave">Save</button></div>
-    </div>
-  </dialog>
-
-
-  
-  <!-- Mother Modal -->
-  <dialog id="motherModal">
-    <header style="display:flex;justify-content:space-between;align-items:center;">
-      <h2>MOTHER SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
-      <button class="close-btn" id="motherClose">&times;</button>
-    </header>
-    <div class="body" id="motherBody"></div>
-    <div class="footer">
-      <button class="btn ghost" id="motherCancel">Cancel</button>
-      <div class="row"><button class="btn secondary" id="motherReset">Reset</button><button class="btn primary" id="motherSave">Save</button></div>
-    </div>
-  </dialog>
-
-
+<div class="kv"><b>Quantity (Child)</b><input id="qty" max="999" min="1" style="max-width:120px" type="number" value="0"/> <input id="engName" maxlength="17" placeholder="PE ID-Name" style="max-width:180px" type="text"/> <input id="qcName" maxlength="17" placeholder="QCE ID-Name" style="max-width:180px" type="text"/> <button class="btn danger small" id="clearOutput">Clear</button></div>
+<div class="kv output-box">
+<b class="output-title">Output</b>
+<div class="out" id="output">—</div>
+</div>
+</div>
+</div>
+<!-- Child Modal -->
+<dialog id="childModal">
+<header style="display:flex;justify-content:space-between;align-items:center;">
+<h2>CHILD SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
+<button class="close-btn" id="childClose">×</button>
+</header>
+<div class="body" id="childBody"></div>
+<div class="footer">
+<button class="btn ghost" id="childCancel">Cancel</button>
+<div class="row"><button class="btn secondary" id="childReset">Reset</button><button class="btn primary" id="childSave">Save</button></div>
+</div>
+</dialog>
+<!-- Mother Modal -->
+<dialog id="motherModal">
+<header style="display:flex;justify-content:space-between;align-items:center;">
+<h2>MOTHER SERIAL FORMAT <small><i>(to be validated/qualified by QCE)</i></small></h2>
+<button class="close-btn" id="motherClose">×</button>
+</header>
+<div class="body" id="motherBody"></div>
+<div class="footer">
+<button class="btn ghost" id="motherCancel">Cancel</button>
+<div class="row"><button class="btn secondary" id="motherReset">Reset</button><button class="btn primary" id="motherSave">Save</button></div>
+</div>
+</dialog>
 <script>
   // ====== State ======
   const C = { // Child
@@ -482,8 +624,8 @@ small.help{font-size:11px;color:#64748b;margin-left:160px;display:block}
 
     // Update downloads & stats
     const hasDownload = lines.length > 0;
-    document.getElementById('dlTxt').disabled = !hasDownload;
-    document.getElementById('dlCsv').disabled = !hasDownload;
+    document.getElementById('dlTxt').disabled = !(hasDownload && namesFilled && namesFilled());
+    document.getElementById('dlCsv').disabled = !(hasDownload && namesFilled && namesFilled());
     document.getElementById('stats').textContent = hasDownload ? `${lines.length} lines • ${completeGroups} group(s)` : '—';
 
     // Toggle badge active state based on download availability
@@ -691,7 +833,6 @@ document.getElementById('motherClose').addEventListener('click', ()=> motherModa
   // Other controls
   document.getElementById('generate').addEventListener('click', generate);
   document.getElementById('dlTxt').addEventListener('click', downloadTxt);
-  document.getElementById('dlCsv').addEventListener('click', downloadCsv);
   // Initial render
   generate();
 
@@ -716,15 +857,894 @@ document.getElementById('motherClose').addEventListener('click', ()=> motherModa
     document.getElementById('stats').textContent = '—';
   });
 
+
+
+// --- Minimalist Theme Toggle ---
+const themeToggle = document.getElementById('themeToggle');
+
+if (localStorage.getItem('theme') === 'light') {
+  document.documentElement.classList.add('light');
+  document.body.classList.add('light');
+  themeToggle.textContent = '☀️';
+}
+
+themeToggle.addEventListener('click', () => {
+  const isLight = document.documentElement.classList.toggle('light');
+  document.body.classList.toggle('light', isLight);
+  themeToggle.textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+});
+
+
+// === Require names before allowing downloads (simplified) ===
+function namesFilled(){
+  const eng = (document.getElementById('engName')?.value || '').trim();
+  const qc  = (document.getElementById('qcName')?.value || '').trim();
+  return eng.length > 0 && qc.length > 0;
+}
+
+function updateDownloadButtons(){
+  const dlTxt = document.getElementById('dlTxt');
+  const dlCsv = document.getElementById('dlCsv');
+  const hasLines = (window.__lines || []).length > 0;
+  const ok = hasLines && namesFilled();
+  dlTxt.disabled = !ok;
+  dlCsv.disabled = !ok;
+}
+
+// Hook into existing generate() to enforce validation
+(function(){
+  const _generate = generate;
+  generate = function(){
+    _generate();
+    updateDownloadButtons();
+  };
+})();
+
+// Live validation while typing
+['engName','qcName','qty'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('input', ()=> updateDownloadButtons());
+  }
+});
+
+// Guard clicks on download buttons
+['dlTxt','dlCsv'].forEach(id=>{
+  const btn = document.getElementById(id);
+  if(btn){
+    btn.addEventListener('click', (e)=>{
+      if(!namesFilled()){
+        e.preventDefault();
+        return false;
+      }
+    });
+  }
+});
+
+// Run once on load
+updateDownloadButtons();
+
+// === Hard guard: block download functions when names missing ===
+(function(){
+  const _downloadTxt = downloadTxt;
+  const _downloadCsv = downloadCsv;
+  window.downloadTxt = function(){
+    if (!namesFilled()) { return; }
+    _downloadTxt();
+  };
+  window.downloadCsv = function(){
+    if (!namesFilled()) { return; }
+    _downloadCsv();
+  };
+})();
+
+// === Generate requires names filled ===
+function updateGenerateButton(){
+  const gen = document.getElementById('generate');
+  if(gen){ gen.disabled = !namesFilled(); }
+}
+
+// Replace generate with a guarded version
+(function(){
+  const _generate = generate;
+  generate = function(){
+    if(!namesFilled()){ return; }
+    _generate();
+    updateDownloadButtons && updateDownloadButtons();
+  };
+})();
+
+// Live check for name inputs
+['engName','qcName'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('input', ()=>{
+      updateGenerateButton();
+      updateDownloadButtons && updateDownloadButtons();
+    });
+  }
+});
+
+// Initial state on load
+updateGenerateButton();
+
+// === Updated name rules ===
+// peFilled: only Process Engineer required
+function peFilled(){
+  const eng = (document.getElementById('engName')?.value || '').trim();
+  return eng.length > 0;
+}
+// namesFilled: both Process Engineer and QCE required
+function namesFilled(){
+  const eng = (document.getElementById('engName')?.value || '').trim();
+  const qc  = (document.getElementById('qcName')?.value || '').trim();
+  return eng.length > 0 && qc.length > 0;
+}
+
+// Enable Generate if PE is filled. Enable downloads if BOTH names + lines exist.
+function updateGenerateButton(){
+  const gen = document.getElementById('generate');
+  if(gen){ gen.disabled = !peFilled(); }
+}
+function updateDownloadButtons(){
+  const dlTxt = document.getElementById('dlTxt');
+  const dlCsv = document.getElementById('dlCsv');
+  const hasLines = (window.__lines || []).length > 0;
+  const ok = hasLines && namesFilled();
+  if(dlTxt) dlTxt.disabled = !ok;
+  if(dlCsv) dlCsv.disabled = !ok;
+}
+
+// Guard generate: require PE name
+(function(){
+  const _generate = generate;
+  generate = function(){
+    if(!peFilled()){ return; }
+    _generate();
+    updateDownloadButtons && updateDownloadButtons();
+  };
+})();
+
+// Keep hard guards on downloads (if previously added); otherwise add them now.
+if (typeof window.downloadTxt === 'function') {
+  (function(){
+    const _downloadTxt = downloadTxt;
+    const _downloadCsv = downloadCsv;
+    window.downloadTxt = function(){
+      if (!namesFilled()) { return; }
+      _downloadTxt();
+    };
+    window.downloadCsv = function(){
+      if (!namesFilled()) { return; }
+      _downloadCsv();
+    };
+  })();
+}
+
+// Live checks
+['engName','qcName','qty'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('input', ()=>{
+      updateGenerateButton();
+      updateDownloadButtons && updateDownloadButtons();
+    });
+  }
+});
+
+// Initial state
+updateGenerateButton();
+updateDownloadButtons && updateDownloadButtons();
+
+
+// === FINAL SAFETY: prevent downloads without both names ===
+(function(){
+  const txtBtn = document.getElementById('dlTxt');
+  const csvBtn = document.getElementById('dlCsv');
+  function blockIfMissing(e){
+    if(!(typeof namesFilled==='function' && namesFilled())){
+      e.preventDefault();
+      return false;
+    }
+  }
+  if(txtBtn){ txtBtn.addEventListener('click', blockIfMissing, true); }
+  if(csvBtn){ csvBtn.addEventListener('click', blockIfMissing, true); }
+})();
+
+// === Strict ID rules: 6 digits only and not equal ===
+function onlyDigitsAndLimit(el){
+  if(!el) return;
+  const cleaned = (el.value || '').replace(/\D+/g, '').slice(0,6);
+  if(el.value !== cleaned){ el.value = cleaned; }
+}
+
+function peValid(){
+  const v = (document.getElementById('engName')?.value || '').trim();
+  return /^\d{6}$/.test(v);
+}
+function qcValid(){
+  const v = (document.getElementById('qcName')?.value || '').trim();
+  return /^\d{6}$/.test(v);
+}
+function idsDistinct(){
+  const pe = (document.getElementById('engName')?.value || '').trim();
+  const qc = (document.getElementById('qcName')?.value || '').trim();
+  return pe !== '' && qc !== '' ? pe !== qc : true;
+}
+function bothValidDistinct(){
+  return peValid() && qcValid() && idsDistinct();
+}
+
+// Override previous helpers to use strict rules
+function namesFilled(){ return bothValidDistinct(); }
+function peFilled(){ return peValid(); }
+
+function updateGenerateButton(){
+  const gen = document.getElementById('generate');
+  if(gen){ gen.disabled = !peValid(); }
+}
+
+function updateDownloadButtons(){
+  const dlTxt = document.getElementById('dlTxt');
+  const dlCsv = document.getElementById('dlCsv');
+  const hasLines = (window.__lines || []).length > 0;
+  const ok = hasLines && bothValidDistinct();
+  if(dlTxt) dlTxt.disabled = !ok;
+  if(dlCsv) dlCsv.disabled = !ok;
+}
+
+// Hard-guard downloads
+(function(){
+  const _txt = window.downloadTxt;
+  const _csv = window.downloadCsv;
+  window.downloadTxt = function(){
+    if(!bothValidDistinct()) return;
+    _txt();
+  };
+  window.downloadCsv = function(){
+    if(!bothValidDistinct()) return;
+    _csv();
+  };
+})();
+
+// Enforce numeric input on the fly
+['engName','qcName'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  ['input','change','paste'].forEach(evt=>{
+    el.addEventListener(evt, ()=>{
+      onlyDigitsAndLimit(el);
+      updateGenerateButton();
+      updateDownloadButtons && updateDownloadButtons();
+    });
+  });
+});
+
+// Initial run
+onlyDigitsAndLimit(document.getElementById('engName'));
+onlyDigitsAndLimit(document.getElementById('qcName'));
+updateGenerateButton();
+updateDownloadButtons && updateDownloadButtons();
+
+// === Strict ID format: 6 digits + dash + 1-10 letters ===
+// Regex: ^\d{6}-[A-Za-z]{1,10}$
+
+function cleanAndFormatID(el){
+  if(!el) return;
+  let raw = (el.value || '').toUpperCase();
+  // Remove invalid chars
+  raw = raw.replace(/[^0-9A-Z-]/g, '');
+  // Split digits and letters
+  let digits = raw.replace(/[^0-9]/g, '').slice(0,6);
+  let letters = raw.replace(/[^A-Z]/g, '').slice(0,10);
+  if(digits.length === 6){
+    el.value = letters.length > 0 ? digits + '-' + letters : digits + '-';
+  } else {
+    el.value = digits;
+  }
+}
+
+function peValid(){
+  const v = (document.getElementById('engName')?.value || '').trim();
+  return /^\d{6}-[A-Z]{1,10}$/.test(v);
+}
+function qcValid(){
+  const v = (document.getElementById('qcName')?.value || '').trim();
+  return /^\d{6}-[A-Z]{1,10}$/.test(v);
+}
+function idsDistinct(){
+  const pe = (document.getElementById('engName')?.value || '').trim();
+  const qc = (document.getElementById('qcName')?.value || '').trim();
+  return pe !== '' && qc !== '' ? pe !== qc : true;
+}
+function bothValidDistinct(){
+  return peValid() && qcValid() && idsDistinct();
+}
+
+// Override namesFilled/peFilled
+function namesFilled(){ return bothValidDistinct(); }
+function peFilled(){ return peValid(); }
+
+function updateGenerateButton(){
+  const gen = document.getElementById('generate');
+  if(gen){ gen.disabled = !peValid(); }
+}
+function updateDownloadButtons(){
+  const dlTxt = document.getElementById('dlTxt');
+  const dlCsv = document.getElementById('dlCsv');
+  const hasLines = (window.__lines || []).length > 0;
+  const ok = hasLines && bothValidDistinct();
+  if(dlTxt) dlTxt.disabled = !ok;
+  if(dlCsv) dlCsv.disabled = !ok;
+}
+
+// Hard-guard downloads
+(function(){
+  const _txt = window.downloadTxt;
+  const _csv = window.downloadCsv;
+  window.downloadTxt = function(){
+    if(!bothValidDistinct()) return;
+    _txt();
+  };
+  window.downloadCsv = function(){
+    if(!bothValidDistinct()) return;
+    _csv();
+  };
+})();
+
+// Auto-format while typing
+['engName','qcName'].forEach(id=>{
+  const el = document.getElementById(id);
+  if(!el) return;
+  ['input','change','paste'].forEach(evt=>{
+    el.addEventListener(evt, ()=>{
+      cleanAndFormatID(el);
+      updateGenerateButton();
+      updateDownloadButtons && updateDownloadButtons();
+    });
+  });
+});
+
+// Initial run
+cleanAndFormatID(document.getElementById('engName'));
+cleanAndFormatID(document.getElementById('qcName'));
+updateGenerateButton();
+updateDownloadButtons && updateDownloadButtons();
+
+
+// === Corrected auto-format to allow letters after dash ===
+function cleanAndFormatID(el){
+  if(!el) return;
+  let raw = (el.value || '').toUpperCase();
+
+  // Keep only digits, dash, letters
+  raw = raw.replace(/[^0-9A-Z-]/g, '');
+
+  // If dash missing and we have 6 digits, insert it
+  if (/^\d{6}$/.test(raw)) {
+    raw = raw + '-';
+  }
+
+  // Split around first dash
+  const parts = raw.split('-', 2);
+  let digits = parts[0].replace(/[^0-9]/g, '').slice(0,6);
+  let letters = (parts.length > 1 ? parts[1] : '').replace(/[^A-Z]/g, '').slice(0,10);
+
+  // Recompose
+  if (digits.length === 6) {
+    raw = letters.length ? digits + '-' + letters : digits + (raw.includes('-') ? '-' : '');
+  } else {
+    raw = digits; // before 6 digits, no dash or letters yet
+  }
+
+  el.value = raw;
+}
+
+
+// === FINAL corrected auto-format: 6 digits, auto-dash, then 1-10 letters ===
+function cleanAndFormatID(el){
+  if(!el) return;
+  let raw = (el.value || '').toUpperCase();
+
+  // Keep only digits and letters while typing
+  raw = raw.replace(/[^0-9A-Z]/g, '');
+
+  // First up to 6 digits
+  let digits = raw.replace(/[^0-9]/g, '').slice(0, 6);
+
+  // Letters allowed only after the first 6 chars the user entered
+  let rest = '';
+  if (raw.length > 6) {
+    rest = raw.slice(6).replace(/[^A-Z]/g, '').slice(0, 10);
+  }
+
+  // Recompose with auto dash once we have 6 digits
+  if (digits.length === 6) {
+    el.value = rest.length ? digits + '-' + rest : digits + '-';
+  } else {
+    el.value = digits;
+  }
+}
+
+// === Robust formatter: keep dash, allow letters after it ===
+function cleanAndFormatID(el){
+  if(!el) return;
+  let v = (el.value || '').toUpperCase();
+  // Allow only digits, letters, single dash
+  v = v.replace(/[^0-9A-Z-]/g, '');
+  // Keep only first dash if multiple
+  const firstDash = v.indexOf('-');
+  if (firstDash !== -1) {
+    v = v.slice(0, firstDash + 1) + v.slice(firstDash + 1).replace(/-/g, '');
+  }
+  // Split into parts
+  let parts = v.split('-', 2);
+  let digits = (parts[0] || '').replace(/[^0-9]/g, '').slice(0, 6);
+  let letters = parts.length > 1 ? (parts[1] || '').replace(/[^A-Z]/g, '').slice(0, 10) : '';
+  // Compose with auto-dash after 6 digits
+  if (digits.length === 6) {
+    el.value = letters.length ? digits + '-' + letters : digits + '-';
+  } else {
+    el.value = digits; // No dash until 6 digits
+  }
+}
+
+
+// ==== FINAL PATCH: allow letters after dash, validate, and wire events ====
+function cleanAndFormatID(el){
+  if(!el) return;
+  let v = (el.value || '').toUpperCase();
+
+  // Keep digits, letters, dash only
+  v = v.replace(/[^0-9A-Z-]/g, '');
+
+  // Only one dash allowed (keep first)
+  const firstDash = v.indexOf('-');
+  if (firstDash !== -1) {
+    v = v.slice(0, firstDash + 1) + v.slice(firstDash + 1).replace(/-/g, '');
+  }
+
+  // Split and constrain
+  const parts = v.split('-', 2);
+  const digits = (parts[0] || '').replace(/[^0-9]/g, '').slice(0,6);
+  const letters = parts.length > 1 ? (parts[1] || '').replace(/[^A-Z]/g, '').slice(0,10) : '';
+
+  // Recompose
+  if (digits.length === 6) {
+    el.value = digits + '-' + letters;
+  } else {
+    el.value = digits; // no dash/letters until 6 digits present
+  }
+}
+
+// Validators for new format: 6 digits + dash + 1-10 letters
+function peValid(){
+  const v = (document.getElementById('engName')?.value || '').trim().toUpperCase();
+  return /^\d{6}-[A-Z]{1,10}$/.test(v);
+}
+function qcValid(){
+  const v = (document.getElementById('qcName')?.value || '').trim().toUpperCase();
+  return /^\d{6}-[A-Z]{1,10}$/.test(v);
+}
+function idsDistinct(){
+  const pe = (document.getElementById('engName')?.value || '').trim().toUpperCase();
+  const qc = (document.getElementById('qcName')?.value || '').trim().toUpperCase();
+  return pe && qc ? pe !== qc : true;
+}
+function bothValidDistinct(){ return peValid() && qcValid() && idsDistinct(); }
+
+// Update buttons using latest rules
+function updateGenerateButton(){
+  const gen = document.getElementById('generate');
+  if(gen){ gen.disabled = !peValid(); }
+}
+function updateDownloadButtons(){
+  const dlTxt = document.getElementById('dlTxt');
+  const dlCsv = document.getElementById('dlCsv');
+  const hasLines = (window.__lines || []).length > 0;
+  const ok = hasLines && bothValidDistinct();
+  if(dlTxt) dlTxt.disabled = !ok;
+  if(dlCsv) dlCsv.disabled = !ok;
+}
+
+// Hard-guard downloads
+(function(){
+  const _txt = window.downloadTxt;
+  const _csv = window.downloadCsv;
+  window.downloadTxt = function(){
+    if(!bothValidDistinct()) return;
+    _txt();
+  };
+  window.downloadCsv = function(){
+    if(!bothValidDistinct()) return;
+    _csv();
+  };
+})();
+
+// Rebind events for both inputs (input/change/paste)
+(function(){
+  const ids = ['engName','qcName'];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    ['input','change','paste'].forEach(evt=>{
+      el.addEventListener(evt, ()=>{
+        cleanAndFormatID(el);
+        updateGenerateButton();
+        if(typeof updateDownloadButtons==='function') updateDownloadButtons();
+      });
+    });
+    // Initial clean
+    cleanAndFormatID(el);
+  });
+  // Initial state
+  updateGenerateButton();
+  if(typeof updateDownloadButtons==='function') updateDownloadButtons();
+})();
+
+// ==== ULTRA-GUARD PATCH ====
+// 1) Neutralize any old numeric-only sanitizer
+window.onlyDigitsAndLimit = function(){ /* disabled */ };
+
+// 2) Final formatter (kept)
+function cleanAndFormatID(el){
+  if(!el) return;
+  let v = (el.value || '').toUpperCase();
+  v = v.replace(/[^0-9A-Z-]/g, '');
+  const firstDash = v.indexOf('-');
+  if (firstDash !== -1) {
+    v = v.slice(0, firstDash + 1) + v.slice(firstDash + 1).replace(/-/g, '');
+  }
+  const parts = v.split('-', 2);
+  const digits = (parts[0] || '').replace(/[^0-9]/g, '').slice(0,6);
+  const letters = parts.length > 1 ? (parts[1] || '').replace(/[^A-Z]/g, '').slice(0,10) : '';
+  if (digits.length === 6) {
+    el.value = digits + '-' + letters;
+  } else {
+    el.value = digits;
+  }
+}
+
+// 3) Capture-phase handlers that block earlier listeners from stripping letters
+(function attachStrongHandlers(){
+  ['engName','qcName'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+
+    // Remove inline handlers if any
+    el.oninput = null; el.onchange = null; el.onpaste = null; el.onkeydown = null;
+
+    // Keydown: allow letters after dash; always uppercase
+    el.addEventListener('keydown', function(e){
+      // Allow control keys
+      if (['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key)) return;
+      const val = el.value.toUpperCase();
+      const dashAt = val.indexOf('-');
+      const cursor = el.selectionStart;
+      // Before 6 digits: only digits allowed
+      if (dashAt === -1 || cursor <= dashAt) {
+        if (!/^[0-9]$/.test(e.key)) { e.preventDefault(); }
+      } else {
+        // After dash: only letters allowed
+        if (!/^[A-Z]$/.test(e.key)) { e.preventDefault(); }
+      }
+    }, true); // capture
+
+    // Input/change/paste: stop other listeners, then format
+    ['input','change','paste'].forEach(evt=>{
+      el.addEventListener(evt, function(e){
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        cleanAndFormatID(el);
+        if (typeof updateGenerateButton==='function') updateGenerateButton();
+        if (typeof updateDownloadButtons==='function') updateDownloadButtons();
+      }, true); // capture
+    });
+
+    // Initial normalize
+    cleanAndFormatID(el);
+  });
+})();
+
+
+// === RULE UPDATE: First 6 digits (before dash) must NOT match between PE and QCE ===
+function firstSixDigitsDifferent(){
+  const pe = (document.getElementById('engName')?.value || '').toUpperCase();
+  const qc = (document.getElementById('qcName')?.value || '').toUpperCase();
+  const pe6 = (pe.split('-')[0] || '').slice(0,6);
+  const qc6 = (qc.split('-')[0] || '').slice(0,6);
+  if (pe6.length < 6 || qc6.length < 6) return true; // don't block while incomplete
+  return pe6 !== qc6;
+}
+
+// Override idsDistinct to use first 6-digit comparison AND full-string inequality (extra safety)
+function idsDistinct(){
+  const peVal = (document.getElementById('engName')?.value || '').toUpperCase();
+  const qcVal = (document.getElementById('qcName')?.value || '').toUpperCase();
+  // Must be different in first 6 digits, and overall not identical
+  return firstSixDigitsDifferent() && (peVal === '' || qcVal === '' || peVal !== qcVal);
+}
+
+// Recalculate "bothValidDistinct" with the new rule
+function bothValidDistinct(){
+  return peValid() && qcValid() && idsDistinct();
+}
+
+// Re-evaluate buttons on input
+(function(){
+  ['engName','qcName'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', ()=>{
+      if (typeof updateGenerateButton==='function') updateGenerateButton();
+      if (typeof updateDownloadButtons==='function') updateDownloadButtons();
+    }, true);
+  });
+  if (typeof updateGenerateButton==='function') updateGenerateButton();
+  if (typeof updateDownloadButtons==='function') updateDownloadButtons();
+})();
+</script>
+<div style="position:fixed; bottom:10px; left:10px;
+            font-size:12px; color:#555; user-select:none; text-align:left;">
+  © JAY.T 2025
+</div>
+
+<script>
+// === Tooltip for disabled Generate button ===
+(function(){
+  const genBtn = document.getElementById('generate');
+  if(!genBtn) return;
+
+  // Create tooltip element
+  const tip = document.createElement('div');
+  tip.textContent = 'Input PE ID and name first';
+  Object.assign(tip.style, {
+    position:'fixed', padding:'6px 10px', borderRadius:'8px',
+    background:'rgba(220,38,38,0.95)', color:'#e5e7eb', fontSize:'12px',
+    boxShadow:'0 6px 20px rgba(0,0,0,0.35)', zIndex: 10000, pointerEvents:'none',
+    opacity:'0', transform:'translateY(6px)', transition:'opacity .12s ease, transform .12s ease'
+  });
+  document.body.appendChild(tip);
+
+  function showTip(e){
+    if (!genBtn.disabled) return; // only show when disabled
+    const r = genBtn.getBoundingClientRect();
+    tip.style.left = (r.left + (r.width/2) - (tip.offsetWidth/2)) + 'px';
+    tip.style.top  = (r.top - 10 - tip.offsetHeight) + 'px';
+    tip.style.opacity = '1';
+    tip.style.transform = 'translateY(0)';
+  }
+  function hideTip(){
+    tip.style.opacity = '0';
+    tip.style.transform = 'translateY(6px)';
+  }
+
+  // Hover/focus listeners
+  ['mouseenter','focus'].forEach(ev => genBtn.addEventListener(ev, showTip));
+  ['mouseleave','blur','click'].forEach(ev => genBtn.addEventListener(ev, hideTip));
+
+  // Recompute position if window resizes while shown
+  window.addEventListener('resize', ()=>{
+    if (tip.style.opacity === '1') showTip();
+  });
+
+  // Hook into your existing updater so tooltip tracks enabled/disabled state
+  const _updateGenerateButton = window.updateGenerateButton;
+  window.updateGenerateButton = function(){
+    if (typeof _updateGenerateButton === 'function') _updateGenerateButton();
+    // If it just became enabled while tip is visible, hide it
+    if (!genBtn.disabled) hideTip();
+  };
+})();
+</script>
+
+
+<script>
+// === Tooltip for disabled Laser File & Qualified buttons ===
+(function(){
+  const targets = [
+    { el: document.getElementById('dlTxt'),  msg: 'Input: PE and QCE ID-NAME first' },
+    { el: document.getElementById('dlCsv'),  msg: 'Input: PE and QCE ID-NAME first' },
+  ].filter(t => t.el);
+
+  if (!targets.length) return;
+
+  // Shared tooltip element
+  const tip = document.createElement('div');
+  tip.textContent = '';
+  Object.assign(tip.style, {
+    position:'fixed', padding:'6px 10px', borderRadius:'8px',
+    background:'rgba(220,38,38,0.95)', color:'#fff', fontSize:'12px',
+    boxShadow:'0 6px 20px rgba(0,0,0,0.35)', zIndex: 10000, pointerEvents:'none',
+    opacity:'0', transform:'translateY(6px)', transition:'opacity .12s ease, transform .12s ease'
+  });
+  document.body.appendChild(tip);
+
+  function positionTip(btn){
+    const r = btn.getBoundingClientRect();
+    tip.style.left = (r.left + (r.width/2) - (tip.offsetWidth/2)) + 'px';
+    tip.style.top  = (r.top - 10 - tip.offsetHeight) + 'px';
+  }
+
+  function showTipFor(btn, msg){
+    if (!btn.disabled) return; // only when disabled
+    tip.textContent = msg;
+    positionTip(btn);
+    tip.style.opacity = '1';
+    tip.style.transform = 'translateY(0)';
+  }
+  function hideTip(){
+    tip.style.opacity = '0';
+    tip.style.transform = 'translateY(6px)';
+  }
+
+  targets.forEach(({el, msg}) => {
+    ['mouseenter','focus'].forEach(ev => el.addEventListener(ev, () => showTipFor(el, msg)));
+    ['mouseleave','blur','click'].forEach(ev => el.addEventListener(ev, hideTip));
+  });
+
+  window.addEventListener('resize', () => {
+    if (tip.style.opacity === '1') {
+      const active = targets.find(t => t.el.matches(':hover'));
+      if (active) positionTip(active.el);
+    }
+  });
+})();
 </script>
 
 
 
 
-<div style="position:fixed; bottom:10px; left:10px;
-            font-size:12px; color:#555; user-select:none; text-align:left;">
-  &copy; JAY 2025
-</div>
+
+
+
+
+</head>
+<body>
+  
+<script>
+// === Qualified: Direct A4 PDF download (no UI writing) ===
+(function(){
+  function buildQualifiedRows(){
+    const lines = window.__lines||[]; if(!lines.length) return [];
+    const engName = (document.getElementById('engName')?.value || '').trim();
+    const qcName  = (document.getElementById('qcName')?.value || '').trim();
+    const rows = [
+      {type:'meta', text:`Serial generated by: ${engName}`},
+      {type:'meta', text:`Validated/Qualified by: ${qcName}`},
+      {type:'header', cols:['Type','Serial']}
+    ];
+    let idx=0, made=0; const groups = window.__groups||Math.ceil((window.__qty||0)/6);
+    for(let g=0; g<groups; g++){
+      const inGroup = Math.min(6, (window.__qty||0)-made);
+      for(let i=0;i<inGroup;i++){ rows.push({type:'row', cols:['Child', (lines[idx++]||'')]}); made++; }
+      rows.push({type:'row', cols:['Mother', (lines[idx++]||'')]});
+      rows.push({type:'row', cols:['Mother', (lines[idx++]||'')]});
+    }
+    return rows;
+  }
+
+  function downloadQualifiedPdfDirect(){
+    const rows = buildQualifiedRows(); if (!rows.length) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('jsPDF failed to load.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+    const rawName = ((typeof M!=='undefined' && M.NAME) ? M.NAME : 'Model').replace(/[^A-Za-z0-9 _-]/g,'');
+const modelCode = String(((typeof C!=='undefined' && C.AAAAAA) ? C.AAAAAA : ((typeof M!=='undefined' && M.MODEL) ? M.MODEL : ''))).trim();
+let displayName;
+if (modelCode === '846775') displayName = 'POWER';
+else if (modelCode === '846765') displayName = 'USER INTERFACE';
+else displayName = rawName;
+    const t = new Date();
+    const ymd = String(t.getFullYear()) + String(t.getMonth()+1).padStart(2,'0') + String(t.getDate()).padStart(2,'0');
+
+    const page = { w: 595.28, h: 841.89 };
+    const margin = { top: 56, right: 56, bottom: 56, left: 56 };
+    const col1x = margin.left;
+    const col2x = margin.left + 110;
+    let y = margin.top;
+
+    // Watermark
+    doc.setGState(new doc.GState({ opacity: 0.12 }));
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(90);
+    doc.setTextColor(185, 28, 28);
+    doc.text('QUALIFIED', page.w/2, page.h/2, { angle: -30, align: 'center' });
+    doc.setGState(new doc.GState({ opacity: 1 }));
+
+    // Header (model)
+    doc.setTextColor(17, 24, 39);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
+    doc.text(String(displayName), margin.left, y);
+
+    // Meta
+    const meta1 = rows.find(r=>r.type==='meta')?.text || '';
+    const meta2 = rows.filter(r=>r.type==='meta')[1]?.text || '';
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+    y += 22; doc.text(meta1, margin.left, y);
+    y += 16; doc.text(meta2, margin.left, y);
+    y += 24;
+
+    // Table header
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.setTextColor(185, 28, 28);
+    doc.text('Type', col1x, y);
+    doc.text('Serial', col2x, y);
+    y += 6;
+    doc.setDrawColor(185, 28, 28); doc.setLineWidth(1.5);
+    doc.line(margin.left, y, page.w - margin.right, y);
+    y += 12;
+
+    // Rows
+    doc.setFont('courier', 'normal'); doc.setFontSize(11);
+    doc.setTextColor(17, 24, 39);
+    const lineH = 16;
+    const footerH = 24;
+
+    function newPage(){
+      doc.addPage();
+      // watermark each page
+      doc.setGState(new doc.GState({ opacity: 0.12 }));
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(90);
+      doc.setTextColor(185, 28, 28);
+      doc.text('QUALIFIED', page.w/2, page.h/2, { angle: -30, align: 'center' });
+      doc.setGState(new doc.GState({ opacity: 1 }));
+      // header again
+      y = margin.top;
+      doc.setTextColor(17, 24, 39);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
+      doc.text(String(displayName), margin.left, y);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+      y += 22; doc.text(meta1, margin.left, y);
+      y += 16; doc.text(meta2, margin.left, y);
+      y += 24;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+      doc.setTextColor(185, 28, 28);
+      doc.text('Type', col1x, y);
+      doc.text('Serial', col2x, y);
+      y += 6;
+      doc.setDrawColor(185, 28, 28); doc.setLineWidth(1.5);
+      doc.line(margin.left, y, page.w - margin.right, y);
+      y += 12;
+      doc.setFont('courier', 'normal'); doc.setFontSize(11);
+      doc.setTextColor(17, 24, 39);
+    }
+
+    const dataRows = rows.filter(r=>r.type==='row');
+    dataRows.forEach(r=>{
+      if (y + lineH + footerH > page.h - margin.bottom) newPage();
+      doc.text(String(r.cols[0]), col1x, y);
+      let serial = String(r.cols[1] ?? '');
+      const maxSerialWidth = page.w - margin.right - col2x;
+      while (doc.getTextWidth(serial) > maxSerialWidth && serial.length > 4){
+        serial = serial.slice(0, -4) + '…';
+      }
+      doc.text(serial, col2x, y);
+      y += lineH;
+    });
+
+    // Footer
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128);
+    const footer = `Generated by Ultraguard Tool • ${new Date().toLocaleString()}`;
+    doc.text(footer, margin.left, page.h - margin.bottom + 8);
+
+    // Save
+    const fileName = `Qualified_${displayName}_${ymd}.pdf`;
+    doc.save(fileName);
+  }
+
+  // Wire button (ensure old handlers don't leak)
+  const btn = document.getElementById('dlCsv');
+  if (btn) {
+    try { btn.replaceWith(btn.cloneNode(true)); } catch(e) {}
+  }
+  const reBtn = document.getElementById('dlCsv');
+  if (reBtn) {
+    reBtn.addEventListener('click', downloadQualifiedPdfDirect);
+  }
+})();
+</script>
 
 </body>
 </html>
